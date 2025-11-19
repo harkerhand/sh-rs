@@ -1,5 +1,5 @@
-use crate::token::{CommandPart, ExecutionSource, PipeEndpoint};
 use crate::Result;
+use crate::token::{CommandPart, ExecutionSource, PipeEndpoint};
 use std::env;
 use std::fs::File;
 use std::process::Command;
@@ -24,7 +24,6 @@ pub(crate) async fn execute_command_parts(parts: Vec<CommandPart>) -> Result<()>
         }
         _ => {}
     }
-
 
     let mut previous_stdout_handle: Option<std::process::ChildStdout> = None;
 

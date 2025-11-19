@@ -183,7 +183,6 @@ pub fn parse_command_chain(tokens: Vec<Token>) -> Result<Vec<CommandPart>> {
     Ok(parts)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -201,7 +200,12 @@ mod tests {
         assert_eq!(tokens, expected_tokens);
         let parts = parse_command_chain(tokens).unwrap();
         assert_eq!(parts.len(), 1);
-        let CommandPart::Execute { name, args, stdin, stdout } = &parts[0];
+        let CommandPart::Execute {
+            name,
+            args,
+            stdin,
+            stdout,
+        } = &parts[0];
 
         assert_eq!(name, "echo");
         assert_eq!(args, &vec!["123".to_string()]);
@@ -222,12 +226,22 @@ mod tests {
         assert_eq!(tokens, expected_tokens);
         let parts = parse_command_chain(tokens).unwrap();
         assert_eq!(parts.len(), 2);
-        let CommandPart::Execute { name, args, stdin, stdout } = &parts[0];
+        let CommandPart::Execute {
+            name,
+            args,
+            stdin,
+            stdout,
+        } = &parts[0];
         assert_eq!(name, "echo");
         assert_eq!(args, &vec!["123".to_string()]);
         assert_eq!(*stdin, ExecutionSource::Inherit);
         assert_eq!(*stdout, ExecutionSource::Pipe(PipeEndpoint::Write));
-        let CommandPart::Execute { name, args, stdin, stdout } = &parts[1];
+        let CommandPart::Execute {
+            name,
+            args,
+            stdin,
+            stdout,
+        } = &parts[1];
         assert_eq!(name, "cat");
         assert!(args.is_empty());
         assert_eq!(*stdin, ExecutionSource::Pipe(PipeEndpoint::Read));

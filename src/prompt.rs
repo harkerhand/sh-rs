@@ -1,3 +1,4 @@
+use colored::Colorize;
 use std::io::Write;
 
 pub fn get_prompt() -> String {
@@ -5,10 +6,11 @@ pub fn get_prompt() -> String {
     let current_dir = std::env::current_dir()
         .unwrap_or_else(|_| std::path::PathBuf::from("?"))
         .display()
-        .to_string();
-
+        .to_string()
+        .blue();
+    let green_prompt = "sh>".green();
     // 构建提示符字符串
-    format!("{} sh> ", current_dir)
+    format!("{} {} ", current_dir, green_prompt)
 }
 
 pub fn print_prompt() {
