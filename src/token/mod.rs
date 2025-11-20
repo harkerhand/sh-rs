@@ -1,4 +1,7 @@
 use crate::Result;
+mod env;
+use env::expand_env_vars;
+
 
 // 表示一个最小的词法单元
 #[derive(Debug, PartialEq, Clone)]
@@ -33,6 +36,7 @@ pub enum PipeEndpoint {
     Read,
     Write,
 }
+
 pub fn tokenize(input: &str) -> Vec<Token> {
     let mut tokens = Vec::new();
     let mut chars = input.chars().peekable();
@@ -94,7 +98,8 @@ pub fn tokenize(input: &str) -> Vec<Token> {
         .into_iter()
         .map(|token| {
             if let Token::Word(s) = token {
-                Token::Word(s.trim_matches('"').to_string())
+                let trimmed = s.trim_matches('"').to_string();
+                Token::Word(expand_env_vars(&trimmed))
             } else {
                 token
             }
