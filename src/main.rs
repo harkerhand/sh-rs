@@ -1,11 +1,13 @@
 use crate::token::parse_command_chain;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::io::AsyncBufReadExt;
-use tokio::signal::unix::{SignalKind, signal};
+use tokio::signal::unix::{signal, SignalKind};
 
 mod exec;
 mod prompt;
 mod token;
+mod shrc;
+mod output;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -17,7 +19,7 @@ async fn sigint_handler() {
     loop {
         sigint.recv().await;
         if IS_WAITING_FOR_INPUT.load(Ordering::SeqCst) {
-            eprint!("\n\r");
+            print_error!("\n\r");
             prompt::print_prompt();
         }
     }
@@ -27,6 +29,10 @@ async fn sigint_handler() {
 async fn main() {
     #[cfg(unix)]
     tokio::task::spawn(sigint_handler());
+    
+    if let Err(e) = shrc::load_shrc().await {
+        println_error!("Error loading ~/.shrc: {}", e);
+    }
 
     let mut reader = tokio::io::BufReader::new(tokio::io::stdin());
 
@@ -47,14 +53,14 @@ async fn main() {
                 match parse_command_chain(tokens) {
                     Ok(command_parts) => {
                         if let Err(e) = exec::execute_command_parts(command_parts).await {
-                            eprintln!("Execution error: {}", e);
+                            println_error!("Execution error: {}", e);
                         }
                     }
-                    Err(e) => eprintln!("Parse error: {}", e),
+                    Err(e) => println_error!("Parse error: {}", e),
                 }
             }
             Err(e) => {
-                eprintln!("Error reading input: {}", e);
+                println_error!("Error reading input: {}", e);
                 break;
             }
         }

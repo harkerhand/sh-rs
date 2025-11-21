@@ -1,5 +1,5 @@
-use crate::Result;
 use crate::token::{CommandPart, ExecutionSource, PipeEndpoint};
+use crate::{println_error, Result};
 use std::env;
 use std::fs::File;
 use std::process::Command;
@@ -18,7 +18,7 @@ pub(crate) async fn execute_command_parts(parts: Vec<CommandPart>) -> Result<()>
             let path = args.get(0).unwrap_or(&home_path);
             let new_dir = std::path::Path::new(path);
             if let Err(e) = env::set_current_dir(new_dir) {
-                eprintln!("cd error: {}", e);
+                println_error!("cd error: {}", e);
             }
             return Ok(());
         }
