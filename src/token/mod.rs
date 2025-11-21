@@ -2,7 +2,6 @@ use crate::Result;
 mod env;
 use env::expand_env_vars;
 
-
 // 表示一个最小的词法单元
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {

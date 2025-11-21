@@ -1,6 +1,6 @@
-use crate::token::parse_command_chain;
-use crate::{exec, println_error, Result};
 use crate::IS_WAITING_FOR_INPUT;
+use crate::token::parse_command_chain;
+use crate::{Result, exec, println_error};
 use std::env::VarError;
 use std::sync::atomic::Ordering;
 use tokio::fs;
@@ -38,9 +38,7 @@ pub async fn load_shrc() -> Result<()> {
                 }
             }
         }
-        Err(_) => {
-            return Err(Box::new(VarError::NotPresent))
-        }
+        Err(_) => return Err(Box::new(VarError::NotPresent)),
     }
     Ok(())
 }

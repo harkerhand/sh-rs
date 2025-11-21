@@ -1,14 +1,14 @@
 use crate::token::parse_command_chain;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tokio::io::AsyncBufReadExt;
-use tokio::signal::unix::{signal, SignalKind};
+use tokio::signal::unix::{SignalKind, signal};
 
 mod exec;
-mod prompt;
-mod token;
-mod shrc;
-mod output;
 mod history;
+mod input;
+mod output;
+mod prompt;
+mod shrc;
+mod token;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -34,23 +34,19 @@ async fn main() -> Result<()> {
     if let Err(e) = shrc::load_shrc().await {
         println_error!("Error loading ~/.shrc: {}", e);
     }
-
-    let mut reader = tokio::io::BufReader::new(tokio::io::stdin());
-
+    history::History::load().await?;
     loop {
         IS_WAITING_FOR_INPUT.store(true, Ordering::SeqCst);
-        prompt::print_prompt();
-
-        let mut input = String::new();
-        match reader.read_line(&mut input).await {
-            Ok(0) => break,
-            Ok(_) => {
+        let width = prompt::print_prompt();
+        match input::read_command(width).await {
+            Ok(input) => {
                 let trimmed_input = input.trim();
                 if trimmed_input.is_empty() {
                     continue;
                 }
                 IS_WAITING_FOR_INPUT.store(false, Ordering::SeqCst);
-                history::save_history(trimmed_input).await?;
+                history::History::save(trimmed_input).await?;
+
                 let tokens = token::tokenize(trimmed_input);
                 match parse_command_chain(tokens) {
                     Ok(command_parts) => {
@@ -62,6 +58,11 @@ async fn main() -> Result<()> {
                 }
             }
             Err(e) => {
+                if e.kind() == std::io::ErrorKind::Interrupted {
+                    continue;
+                } else if e.kind() == std::io::ErrorKind::UnexpectedEof {
+                    break;
+                }
                 println_error!("Error reading input: {}", e);
                 break;
             }

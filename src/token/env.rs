@@ -28,8 +28,7 @@ pub fn expand_env_vars(input: &str) -> String {
                     }
                     let val = env::var(&name).unwrap_or_default();
                     out.push_str(&val);
-                } else if let Some('$') = chars.peek().copied()
-                {
+                } else if let Some('$') = chars.peek().copied() {
                     // $$ -> PID
                     chars.next(); // consume second '$'
                     let pid = std::process::id();
@@ -77,10 +76,9 @@ pub fn expand_env_vars(input: &str) -> String {
     out
 }
 
-
 #[cfg(test)]
 mod tests {
-    use crate::token::{tokenize, Token};
+    use crate::token::{Token, tokenize};
 
     #[test]
     fn test_env_expand_basic() {

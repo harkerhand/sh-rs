@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 tokio = { version = "1.48.0", features = ["full"] }
 colored = "3.0.0"
+crossterm = "0.29.0"
+lazy_static = "1.5.0"

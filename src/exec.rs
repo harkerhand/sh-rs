@@ -1,5 +1,5 @@
 use crate::token::{CommandPart, ExecutionSource, PipeEndpoint};
-use crate::{println_error, Result};
+use crate::{Result, println_error};
 use std::env;
 use std::fs::File;
 use std::process::Command;
