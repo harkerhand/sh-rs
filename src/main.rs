@@ -8,6 +8,7 @@ mod prompt;
 mod token;
 mod shrc;
 mod output;
+mod history;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -26,10 +27,10 @@ async fn sigint_handler() {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     #[cfg(unix)]
     tokio::task::spawn(sigint_handler());
-    
+
     if let Err(e) = shrc::load_shrc().await {
         println_error!("Error loading ~/.shrc: {}", e);
     }
@@ -49,6 +50,7 @@ async fn main() {
                     continue;
                 }
                 IS_WAITING_FOR_INPUT.store(false, Ordering::SeqCst);
+                history::save_history(trimmed_input).await?;
                 let tokens = token::tokenize(trimmed_input);
                 match parse_command_chain(tokens) {
                     Ok(command_parts) => {
@@ -65,4 +67,5 @@ async fn main() {
             }
         }
     }
+    Ok(())
 }
