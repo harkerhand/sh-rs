@@ -1,0 +1,71 @@
+name: 📦 Rust Tag Release
+
+on:
+  # 当有新的 tag 被推送到仓库时触发此工作流
+  push:
+    tags:
+      - 'v*' # 匹配所有以 'v' 开头的 tag，例如 v1.0.0, v2.1
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ 检出代码
+        uses: actions/checkout@v4
+
+      - name: 🛠️ 设置 Rust 环境
+        # 使用 dtolnay/rust-toolchain 动作可以轻松设置 Rust 工具链
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: ⚙️ 缓存 Cargo 依赖
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: 🏗️ 编译 Release 版本
+        # 使用 --locked 确保编译时使用 Cargo.lock 中的精确依赖版本
+        run: cargo build --release --locked
+
+      - name: 🏷️ 获取 Tag 名称
+        # 从 GITHUB_REF (refs/tags/v1.0.0) 中提取实际的 tag (v1.0.0)
+        id: get_tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: 🗜️ 打包可执行文件
+        run: |
+          BINARY_NAME="sh-rs" 
+          TARGET_PATH="target/release/$BINARY_NAME"
+          
+          # 创建一个特定版本的目录，包含可执行文件和 README/LICENSE 等
+          mkdir -p ${{ steps.get_tag.outputs.TAG_NAME }}
+          cp $TARGET_PATH ${{ steps.get_tag.outputs.TAG_NAME }}/
+          
+          # 可选：如果需要，可以复制其他文件
+          # cp README.md ${{ steps.get_tag.outputs.TAG_NAME }}/
+          
+          # 创建 ZIP 压缩包
+          zip -r ${{ steps.get_tag.outputs.TAG_NAME }}-linux-x64.zip ${{ steps.get_tag.outputs.TAG_NAME }}
+          echo "ASSET_NAME=${{ steps.get_tag.outputs.TAG_NAME }}-linux-x64.zip" >> $GITHUB_ENV
+
+      - name: 🚀 创建 GitHub Release
+        # 使用 softprops/action-gh-release 动作来创建和上传 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          # assets 参数指定要上传的文件
+          files: ${{ env.ASSET_NAME }}
+          # name 参数设置 Release 的标题，使用 tag 名称
+          name: Release ${{ steps.get_tag.outputs.TAG_NAME }}
+          # body 参数可以自定义 Release 的说明
+          body: |
+            # Release ${{ steps.get_tag.outputs.TAG_NAME }}
+            
+            🎉 New version is available!
+            
+            This release includes the compiled binary for Linux x64.
