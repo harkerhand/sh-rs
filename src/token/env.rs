@@ -6,6 +6,13 @@ pub fn expand_env_vars(input: &str) -> String {
 
     while let Some(c) = chars.next() {
         match c {
+            '~' => {
+                if out.is_empty() && let Ok(home) = env::var("HOME").or_else(|_| env::var("USERPROFILE")) {
+                    out.push_str(&home);
+                } else {
+                    out.push('~');
+                }
+            }
             '\\' => {
                 if let Some('$') = chars.peek().copied() {
                     chars.next();
@@ -78,7 +85,7 @@ pub fn expand_env_vars(input: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::token::{Token, tokenize};
+    use crate::token::{tokenize, Token};
 
     #[test]
     fn test_env_expand_basic() {
@@ -106,6 +113,20 @@ mod tests {
             Token::Word("world".to_string()),
             Token::Word("$BAR_TEST".to_string()),
             Token::Word("$world".to_string()),
+        ];
+        assert_eq!(tokens, expected_tokens);
+    }
+
+    #[test]
+    fn test_env_expand_home() {
+        unsafe {
+            std::env::set_var("HOME", "/home/testuser");
+        }
+        let input = "cd ~";
+        let tokens = tokenize(input);
+        let expected_tokens = vec![
+            Token::Word("cd".to_string()),
+            Token::Word("/home/testuser".to_string()),
         ];
         assert_eq!(tokens, expected_tokens);
     }
