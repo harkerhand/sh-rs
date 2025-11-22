@@ -14,14 +14,6 @@ pub async fn read_command(prompt_with: u16) -> io::Result<String> {
     let mut cursor_pos = 0;
     let mut history_index = 0;
 
-    // We need to track the original buffer when navigating history
-    // so we can restore it if the user navigates back to the "current" line.
-    // However, standard shells usually just keep the current buffer as the "last" entry temporarily
-    // or just clear it. For simplicity, let's say if we go down past the last history item, we get an empty buffer.
-    // Or we can save the current buffer if it's modified.
-    // Let's implement simple history navigation first:
-    // If we are at history.len(), we are editing a new line.
-
     loop {
         stdout.flush()?;
 
